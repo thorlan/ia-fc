@@ -1,0 +1,76 @@
+1. Contexto Geral
+Produto — crie docs/contexto-produto.md respondendo:
+
+O que o projeto faz, pra quem, que problema resolve
+Principais funcionalidades já existentes
+Qualquer regra de negócio importante
+
+Técnica — crie docs/contexto-tecnico.md respondendo:
+
+Linguagem, framework principal, banco de dados, infra
+Como o projeto está organizado (arquitetura em alto nível: monolito, microserviços, MVC, etc.)
+Metodologias usadas (TDD, trunk-based, etc.)
+
+💡 Prompt pra gerar rascunho com Copilot:
+
+"Analise a estrutura do projeto (#codebase) e me ajude a redigir um documento contexto-tecnico.md descrevendo stack, arquitetura e organização de pastas."
+
+2. Stack → Libs/Frameworks + Documentação prévia
+Aqui entra o que você mandou no documento sobre Context7/Firecrawl. Passo a passo:
+
+Liste as dependências reais do projeto (package.json, requirements.txt, etc.)
+Peça pra IA gerar um .md por lib em docs/libs/, usando o prompt do material:
+
+
+"Analise o codebase, focando na pasta src e no requirements.txt, identifique as bibliotecas de terceiros usadas. Consulte o Context7 (ou documentação oficial) e crie arquivos markdown em docs/libs (ex: LANGCHAIN.md, PINECONE.md) com a documentação relevante de cada uma."
+
+
+Se a lib muda muito rápido ou o Context7 estiver desatualizado, clone o repo oficial na versão que você usa e peça pra IA gerar a doc a partir do código-fonte real.
+Pra documentações profundas (várias subpáginas), use Firecrawl em vez de fetch simples.
+
+3. Guidelines
+Crie docs/guidelines.md ou já direto no .github/copilot-instructions.md (esse é lido automaticamente pelo Copilot). Coloque:
+
+Padrão de nomenclatura
+Como documentar funções/classes
+Padrão de testes exigido
+Formatação de código (linter, etc.)
+
+4. README
+Foque em dois blocos:
+
+Como rodar o projeto (setup, variáveis de ambiente, comandos)
+Índice com links pra todos os outros documentos (docs/contexto-produto.md, docs/libs/, docs/adrs/, etc.) — isso é importante pra IA (e humanos) navegarem pela documentação.
+
+5. ADRs
+Crie uma pasta docs/adrs/ com um arquivo por decisão, tipo 001-escolha-do-banco.md. Template simples:
+markdown## Decisão
+[o que foi escolhido]
+
+## Onde é usado
+[qual parte do sistema]
+
+## Motivo
+[por que essa escolha e não outra]
+
+## Alternativas consideradas
+[o que foi descartado e por quê]
+Isso evita a IA "inventar" tecnologia fora do escopo combinado.
+6. Plano de Ação → Tarefa
+Dois níveis:
+
+Plano de ação (docs/plano-de-acao.md): visão de alto nível do que vai ser desenvolvido, em fases/marcos.
+Tarefa (docs/tarefas/nome-da-tarefa.md): quebra detalhada passo a passo de uma fase específica, o que vira sua "TODO list" pra IA trabalhar em cima.
+
+
+Ordem recomendada pra preencher tudo
+
+Contexto Geral (Produto + Técnica)
+Guidelines
+README (já linkando os outros docs)
+Stack/Libs (docs de dependências)
+ADRs
+Plano de ação → Tarefa
+
+Só depois disso tudo pronto você parte pro documento de feature (docs/features/nome-da-feature.md) e então gera o PRP em cima, como vimos antes.
+Quer que eu já monte os templates .md de cada um desses (contexto-produto, contexto-tecnico, guidelines, ADR, plano-de-acao) prontos pra você só preencher e usar no seu projeto?
