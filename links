@@ -1,0 +1,25 @@
+https://devfullcycle.notion.site/Quick-Wins-com-IA-29-07-2025-2411423c0388801d8369f34cfe403e6c
+
+Prontinho! Montei o zip docs-templates.zip com toda a estrutura do seu print (e fechei o fluxo até o PRP). Estrutura completa:
+docs-templates/
+├── README.md                          → como rodar + índice de tudo
+├── .github/copilot-instructions.md    → guidelines pro Copilot
+└── docs/
+    ├── contexto-produto.md
+    ├── contexto-tecnico.md
+    ├── libs/000-template.md           → 1 arquivo por lib de terceiros
+    ├── adrs/000-template.md           → 1 arquivo por decisão
+    ├── plano-de-acao.md
+    ├── tarefas/000-template.md        → 1 arquivo por tarefa
+    ├── state.local.md                 → estado atual do projeto
+    ├── features/000-template.md       → entrada pra gerar o PRP
+    └── prps/templates/prp-base.md     → template do PRP em si
+Como usar na prática:
+
+Extraia o zip dentro do seu projeto (ou copie só as pastas que faltam)
+Renomeie os 000-template.md conforme for criando instâncias (ex: 001-postgres.md em adrs, LANGCHAIN.md em libs)
+Preencha contexto-produto.md, contexto-tecnico.md e o copilot-instructions.md primeiro — são a base de tudo
+Vá alimentando libs/, adrs/, plano-de-acao.md conforme o projeto evolui
+Quando for atacar uma feature nova: preencha um features/00X-nome.md, depois peça pro Copilot gerar o PRP usando o prp-base.md como molde (o próprio template já traz o prompt sugerido no topo)
+
+Cada template já tem um prompt-sugestão embutido (em > blockquote) pra você colar direto no Copilot Chat e acelerar o preenchimento com apoio da IA.
