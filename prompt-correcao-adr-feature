@@ -1,0 +1,20 @@
+Atue como um Arquiteto de Software e Especialista em Engenharia de Requisitos. Estou organizando a documentação do meu projeto para que você (IA) tenha o melhor contexto possível.
+
+Minha estrutura de pastas de documentação é a seguinte:
+- /adrs (Para decisões técnicas e de arquitetura de software)
+- /features (Para regras de negócio, histórias de usuário e comportamento do sistema)
+- /libs (Para documentação de componentes reutilizáveis)
+- /prps (Para propostas e requisitos de produto iniciais)
+- /tarefas (Para o histórico de itens a fazer)
+
+Identifiquei um problema: misturei Regras de Negócio e Features dentro da pasta `/adrs`. Um exemplo disso é ter documentado que "um cliente só pode ter acesso a uma rota após a solicitação ter sido aprovada" dentro de um ADR, sendo que isso é uma Feature/Regra de Negócio.
+
+Preciso da sua ajuda para fazer uma varredura e correção desses documentos. Siga os passos abaixo:
+
+1. Analise o conteúdo dos arquivos da pasta `/adrs` que vou te enviar a seguir.
+2. Identifique qualquer trecho que descreva "o que o sistema deve fazer" (regras de negócio, permissões, fluxos de usuário, restrições de tela ou rota).
+3. Separe esse conteúdo de negócio da decisão técnica.
+4. Para cada item de negócio encontrado, crie ou sugira o arquivo correspondente no formato Markdown para a pasta `/features/`, estruturando-o com títulos claros (ex: # Feature: Nome, ## Regras de Negócio (RN01, RN02...)).
+5. Reescreva o arquivo original da pasta `/adrs`, mantendo apenas a decisão técnica (ex: padrões de código, escolha de ferramentas, arquitetura, infraestrutura) e adicione um link referenciando o arquivo criado na pasta `/features/`.
+
+Estou pronto para enviar o conteúdo dos arquivos. Confirme se entendeu a separação de responsabilidades entre `/adrs` e `/features` para começarmos.
