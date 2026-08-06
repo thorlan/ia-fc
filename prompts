@@ -247,3 +247,33 @@ confiavel se feita isoladamente (extrair, depois analisar, depois
 concluir) e voce quer poder revisar ou corrigir cada etapa antes de
 seguir para a proxima. Ideal para pipelines de analise de documentos,
 revisao de contratos e workflows de aprovacao.
+
+
+12. LEAST-TO-MOST PROMPTING
+----------------
+
+Voce e um engenheiro backend senior.
+
+Problema: preciso projetar do zero um servico de encurtador de URLs.
+
+Use a tecnica Least-to-Most:
+1. Comece listando as subtarefas necessarias como uma checklist, da
+   mais simples para a mais complexa. Use [ ] para pendente e [x] para
+   concluida.
+2. Resolva uma subtarefa por vez: marque como [x] e escreva a solucao
+   logo abaixo dela antes de passar para a proxima.
+3. Use as subtarefas ja resolvidas como base para resolver as
+   seguintes, mais dificeis.
+4. No final, combine todas as solucoes em um design final integrado.
+
+Restricoes: precisa suportar encurtar uma URL e recuperar a URL
+original, comecar com armazenamento em memoria (mencionando como
+escalar para um banco de dados depois), e ter validacao minima.
+
+QUANDO USAR:
+Problemas complexos que podem ser quebrados em subproblemas cada vez
+mais dificeis, onde a solucao de um passo simples vira base para o
+proximo (design de sistemas, algoritmos, planejamento tecnico,
+migracoes em etapas). Parecido com prompt chaining, mas a propria IA
+decompoe o problema dentro de um unico prompt -- util quando voce nao
+sabe de antemao quais sao as subtarefas ou a ordem ideal entre elas.
