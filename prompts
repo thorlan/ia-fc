@@ -17,6 +17,13 @@ System (variacao 2 - personal trainer):
 Voce e um personal trainer super motivacional. Responda de forma curta,
 animada e pratica, sem jargao tecnico.
 
+QUANDO USAR:
+Quando o mesmo conteudo precisa de tons ou niveis de profundidade
+diferentes para publicos diferentes (suporte tecnico vs. cliente leigo,
+juridico vs. comercial). Funciona melhor em chatbots com personas fixas,
+ferramentas internas onde o "papel" muda o vocabulario esperado, e
+testes A/B de tom de resposta.
+
 
 2. ZERO-SHOT
 ----------------
@@ -25,6 +32,12 @@ Responda este e-mail de atendimento ao cliente:
 
 Comprei o produto ha 3 dias e ele veio com defeito. Ja tentei ligar
 duas vezes e ninguem atende. Estou muito insatisfeito.
+
+QUANDO USAR:
+Tarefas simples e comuns, que o modelo ja "sabe" fazer sem exemplo
+(resumir, traduzir, responder um e-mail padrao). E a opcao mais rapida
+e barata -- use como primeira tentativa antes de complicar com few-shot
+ou CoT.
 
 
 3. FEW-SHOT
@@ -49,6 +62,12 @@ Cliente: "Comprei o produto ha 3 dias e ele veio com defeito. Ja
 tentei ligar duas vezes e ninguem atende. Estou muito insatisfeito."
 Resposta:
 
+QUANDO USAR:
+Quando o formato, tom ou estrutura da resposta precisa ser consistente
+e o zero-shot nao acerta sozinho -- classificacao de texto, respostas
+padronizadas de atendimento, extracao de dados em um formato especifico.
+2 a 5 exemplos bem escolhidos costumam bastar.
+
 
 4. CHAIN OF THOUGHT (CoT)
 ----------------
@@ -66,6 +85,11 @@ criterio (salario, localizacao, risco, crescimento) separadamente,
 avalie o peso de cada um para uma pessoa em inicio de carreira, e so
 entao de a recomendacao final.
 
+QUANDO USAR:
+Decisoes com varios criterios, problemas de logica ou matematica, e
+qualquer caso em que voce precisa entender o raciocinio (nao so a
+resposta) para confiar nela ou auditar depois.
+
 
 5. CoT + SELF-CONSISTENCY
 ----------------
@@ -77,6 +101,12 @@ Pense passo a passo e termine com a linha: RESPOSTA: <valor>
 
 (Roda-se esse mesmo prompt varias vezes com temperatura alta e fica-se
 com a resposta que mais se repete entre as execucoes.)
+
+QUANDO USAR:
+Problemas com uma resposta certa e objetiva (calculo, logica, formulas)
+onde o custo de errar e alto e vale pagar mais tokens/tempo para reduzir
+a chance de erro. Nao compensa para tarefas abertas ou criativas, onde
+nao ha uma resposta para "convergir".
 
 
 6. TREE OF THOUGHT (ToT)
@@ -100,6 +130,12 @@ Avalie este roteiro de 0 a 10 em: viabilidade de orcamento, qualidade
 da experiencia e risco de imprevistos. De uma nota final combinada e
 justifique em 2 frases. Termine com "NOTA: <numero>".
 
+QUANDO USAR:
+Planejamento aberto com varias estrategias validas e nenhuma resposta
+unica obvia (roteiros, planos de negocio, arquitetura de solucao).
+Vale o custo extra quando comparar alternativas lado a lado antes de
+escolher e mais importante do que chegar rapido numa resposta.
+
 
 7. SKELETON OF THOUGHT (SoT)
 ----------------
@@ -118,6 +154,13 @@ mercado de trabalho
 Escreva o conteudo da secao "[titulo da secao]" (2 a 3 paragrafos,
 direto ao ponto).
 
+QUANDO USAR:
+Conteudo longo (relatorios, artigos, documentacao) onde voce quer
+aprovar a estrutura antes de gastar tempo/tokens no texto completo, ou
+paralelizar a geracao das secoes para ganhar velocidade. Bom tambem
+quando diferentes secoes podem ser escritas por prompts/modelos
+diferentes.
+
 
 8. ReAct
 ----------------
@@ -129,6 +172,12 @@ guarda-chuva?
 disponivel, alternar entre "penso que preciso checar o clima" -> chama
 a ferramenta -> observa o resultado -> responde. Nao e um prompt
 unico, e o modelo raciocinando e agindo em ciclos ate concluir.)
+
+QUANDO USAR:
+Qualquer pergunta cuja resposta depende de informacao que o modelo nao
+tem de memoria e precisa buscar em tempo real (clima, precos, dados de
+API, busca na web). Essencial sempre que ha ferramentas externas
+disponiveis e a resposta correta muda com o tempo.
 
 
 9. ReAct PARA TRADE-OFFS
@@ -143,6 +192,12 @@ trade-off.
 real de preco/prazo/avaliacao antes de concluir, em vez de responder
 de memoria.)
 
+QUANDO USAR:
+Comparacoes e decisoes de compra/fornecedor que dependem de dados
+atualizados espalhados em fontes diferentes (precos, estoque,
+avaliacoes). Evita que o modelo "chute" numeros -- cada criterio e
+checado antes da recomendacao final.
+
 
 10. IDENTIFICANDO BUGS COM ReAct
 ----------------
@@ -153,6 +208,11 @@ versoes corrigidas), observe o resultado e repita ate encontrar e
 corrigir o bug. No final, mostre o codigo corrigido completo.
 
 [cole aqui o codigo com bug]
+
+QUANDO USAR:
+Debugging real, com acesso a um ambiente de execucao. Melhor do que
+pedir para o modelo "adivinhar" o bug olhando so o codigo, porque cada
+hipotese e testada de fato antes de ser aceita ou descartada.
 
 
 11. PROMPT CHAINING
@@ -180,3 +240,10 @@ Riscos identificados:
 
 Escreva um parecer final de 1 paragrafo: assinar como esta, renegociar,
 ou nao assinar -- e por que.
+
+QUANDO USAR:
+Fluxos com etapas claramente sequenciais, onde cada etapa e mais
+confiavel se feita isoladamente (extrair, depois analisar, depois
+concluir) e voce quer poder revisar ou corrigir cada etapa antes de
+seguir para a proxima. Ideal para pipelines de analise de documentos,
+revisao de contratos e workflows de aprovacao.
