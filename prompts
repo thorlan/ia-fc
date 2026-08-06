@@ -1,139 +1,58 @@
-"""
-prompting_tecnicas.py
-
-Exemplos de implementacao de tecnicas de prompt engineering, todos em um
-unico arquivo para facilitar versionamento no git.
-
-Setup:
-    pip install anthropic langchain-core langchain-anthropic
-    export ANTHROPIC_API_KEY=sua_chave
-
-Uso:
-    python prompting_tecnicas.py <numero>
-    (rode sem argumento para ver a lista de exemplos disponiveis)
-
-Tecnicas cobertas:
-    1. Role prompt
-    2. Zero-shot vs Few-shot
-    3. Chain of Thought (CoT)
-    4. CoT + Self-Consistency
-    5. Tree of Thought (ToT)
-    6. Skeleton of Thought (SoT)
-    7. ReAct (Reasoning + Acting)
-    8. ReAct para trade-offs
-    9. Identificando bugs com ReAct
-    10. Prompt chaining com LangChain
-"""
-import os
-import re
-import subprocess
-import tempfile
-from collections import Counter
-from concurrent.futures import ThreadPoolExecutor
-
-from anthropic import Anthropic
-
-MODEL = "claude-sonnet-5"
-client = Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY", ""))
+PROMPTS - TECNICAS DE PROMPT ENGINEERING
+==========================================
 
 
-# ============================================================
-# 1. ROLE PROMPT
-# Define um papel/persona para a IA assumir, o que muda tom, vocabulario
-# e criterios de julgamento da resposta -- mesma pergunta, resposta
-# diferente.
-# ============================================================
-def demo_role_prompt():
-    pergunta = "Vale a pena tomar 5g de creatina por dia?"
+1. ROLE PROMPT
+----------------
 
-    def perguntar(persona: str | None):
-        kwargs = {"system": persona} if persona else {}
-        resp = client.messages.create(
-            model=MODEL, max_tokens=400,
-            messages=[{"role": "user", "content": pergunta}],
-            **kwargs,
-        )
-        return resp.content[0].text
+Prompt do usuario:
+Vale a pena tomar 5g de creatina por dia?
 
-    print("=== Sem role ===")
-    print(perguntar(None))
+System (variacao 1 - nutricionista):
+Voce e um nutricionista esportivo com CRN ativo. Responda com base em
+evidencia cientifica, cite doses e possiveis efeitos colaterais, e seja
+direto.
 
-    print("\n=== Role: nutricionista esportivo ===")
-    print(perguntar(
-        "Voce e um nutricionista esportivo com CRN ativo. Responda com "
-        "base em evidencia cientifica, cite doses e possiveis efeitos "
-        "colaterais, e seja direto."
-    ))
-
-    print("\n=== Role: personal trainer motivacional ===")
-    print(perguntar(
-        "Voce e um personal trainer super motivacional. Responda de "
-        "forma curta, animada e pratica, sem jargao tecnico."
-    ))
+System (variacao 2 - personal trainer):
+Voce e um personal trainer super motivacional. Responda de forma curta,
+animada e pratica, sem jargao tecnico.
 
 
-# ============================================================
-# 2. ZERO-SHOT vs FEW-SHOT
-# Zero-shot: pede a tarefa direto, sem exemplos.
-# Few-shot: mostra 2-3 exemplos de entrada/saida antes da tarefa real,
-# para calibrar formato e criterio (ex.: tom de voz de atendimento).
-# ============================================================
-def demo_zero_few_shot():
-    email_cliente = (
-        "Comprei o produto ha 3 dias e ele veio com defeito. Ja tentei "
-        "ligar duas vezes e ninguem atende. Estou muito insatisfeito."
-    )
+2. ZERO-SHOT
+----------------
 
-    def zero_shot(email: str) -> str:
-        prompt = f"Responda este e-mail de atendimento ao cliente:\n\n{email}"
-        resp = client.messages.create(
-            model=MODEL, max_tokens=300,
-            messages=[{"role": "user", "content": prompt}],
-        )
-        return resp.content[0].text
+Responda este e-mail de atendimento ao cliente:
 
-    def few_shot(email: str) -> str:
-        # Exemplos calibram o tom de voz da marca (empatico, resolutivo,
-        # sem jargao corporativo) que um "seja educado" generico nao
-        # garante.
-        exemplos = """\
+Comprei o produto ha 3 dias e ele veio com defeito. Ja tentei ligar
+duas vezes e ninguem atende. Estou muito insatisfeito.
+
+
+3. FEW-SHOT
+----------------
+
 Exemplo 1
 Cliente: "O produto atrasou e nao recebi nenhum aviso."
-Resposta: "Poxa, sentimos muito pelo atraso e por voce ter ficado sem \
-noticias -- isso nao devia acontecer. Ja estou verificando o status do \
+Resposta: "Poxa, sentimos muito pelo atraso e por voce ter ficado sem
+noticias -- isso nao devia acontecer. Ja estou verificando o status do
 seu pedido e te retorno em ate 2h com uma solucao."
 
 Exemplo 2
 Cliente: "A cor do produto veio diferente da que pedi."
-Resposta: "Entendo a frustracao, com certeza nao e isso que voce \
-esperava. Vou providenciar a troca sem custo -- pode me confirmar o \
+Resposta: "Entendo a frustracao, com certeza nao e isso que voce
+esperava. Vou providenciar a troca sem custo -- pode me confirmar o
 numero do pedido para eu ja iniciar o processo?"
 
-Agora responda no mesmo estilo (empatico, direto, oferecendo solucao \
+Agora responda no mesmo estilo (empatico, direto, oferecendo solucao
 concreta em ate 2 frases):
 
-Cliente: "{email}"
-Resposta:"""
-        resp = client.messages.create(
-            model=MODEL, max_tokens=300,
-            messages=[{"role": "user", "content": exemplos.format(email=email)}],
-        )
-        return resp.content[0].text
-
-    print("=== Zero-shot ===")
-    print(zero_shot(email_cliente))
-
-    print("\n=== Few-shot (calibrado ao tom da marca) ===")
-    print(few_shot(email_cliente))
+Cliente: "Comprei o produto ha 3 dias e ele veio com defeito. Ja
+tentei ligar duas vezes e ninguem atende. Estou muito insatisfeito."
+Resposta:
 
 
-# ============================================================
-# 3. CHAIN OF THOUGHT (CoT)
-# Pede para a IA raciocinar passo a passo antes de dar a resposta final,
-# em vez de "chutar" a conclusao direto.
-# ============================================================
-def demo_chain_of_thought():
-    situacao = """\
+4. CHAIN OF THOUGHT (CoT)
+----------------
+
 Recebi uma proposta de emprego:
 - Salario 20% maior que o atual
 - Cidade diferente, exigiria mudanca
@@ -141,448 +60,123 @@ Recebi uma proposta de emprego:
 - Meu emprego atual e estavel mas o crescimento e lento
 
 Devo aceitar a proposta?
-"""
 
-    def sem_cot() -> str:
-        resp = client.messages.create(
-            model=MODEL, max_tokens=200,
-            messages=[{"role": "user", "content": situacao + "\nResponda direto: sim ou nao, com 1 frase de justificativa."}],
-        )
-        return resp.content[0].text
-
-    def com_cot() -> str:
-        prompt = (
-            situacao
-            + "\nPense passo a passo antes de concluir. Liste os pros e "
-              "contras de cada criterio (salario, localizacao, risco, "
-              "crescimento) separadamente, avalie o peso de cada um "
-              "para uma pessoa em inicio de carreira, e so entao de a "
-              "recomendacao final."
-        )
-        resp = client.messages.create(
-            model=MODEL, max_tokens=600,
-            messages=[{"role": "user", "content": prompt}],
-        )
-        return resp.content[0].text
-
-    print("=== Sem CoT ===")
-    print(sem_cot())
-
-    print("\n=== Com CoT ===")
-    print(com_cot())
+Pense passo a passo antes de concluir. Liste os pros e contras de cada
+criterio (salario, localizacao, risco, crescimento) separadamente,
+avalie o peso de cada um para uma pessoa em inicio de carreira, e so
+entao de a recomendacao final.
 
 
-# ============================================================
-# 4. CoT + SELF-CONSISTENCY
-# Gera N raciocinios independentes (temperatura > 0) e escolhe a
-# resposta mais frequente entre eles.
-# ============================================================
-def demo_cot_self_consistency():
-    problema = """\
+5. CoT + SELF-CONSISTENCY
+----------------
+
 Uma loja vende um produto por R$120 com 25% de desconto. Depois aplica
-mais 10% de desconto sobre o preco ja com desconto, e por fim cobra
-8% de imposto sobre o valor final. Qual o preco final pago pelo cliente?
+mais 10% de desconto sobre o preco ja com desconto, e por fim cobra 8%
+de imposto sobre o valor final. Qual o preco final pago pelo cliente?
 Pense passo a passo e termine com a linha: RESPOSTA: <valor>
-"""
 
-    def gerar_raciocinio(temperature: float) -> str:
-        resp = client.messages.create(
-            model=MODEL, max_tokens=500, temperature=temperature,
-            messages=[{"role": "user", "content": problema}],
-        )
-        return resp.content[0].text
-
-    def extrair_resposta(texto: str):
-        match = re.search(r"RESPOSTA:\s*(.+)", texto)
-        return match.group(1).strip() if match else None
-
-    n = 5
-    respostas = []
-    for i in range(n):
-        texto = gerar_raciocinio(temperature=0.8)
-        resposta = extrair_resposta(texto)
-        print(f"--- Raciocinio {i+1} -> resposta extraida: {resposta} ---")
-        if resposta:
-            respostas.append(resposta)
-
-    contagem = Counter(respostas)
-    mais_comum, votos = contagem.most_common(1)[0]
-    print(f"\nRespostas: {dict(contagem)}")
-    print(f"Resposta por maioria ({votos}/{n} votos): {mais_comum}")
+(Roda-se esse mesmo prompt varias vezes com temperatura alta e fica-se
+com a resposta que mais se repete entre as execucoes.)
 
 
-# ============================================================
-# 5. TREE OF THOUGHT (ToT)
-# Gera varios "ramos" de solucao em paralelo, avalia cada um e escolhe
-# o melhor.
-# ============================================================
-def demo_tree_of_thought():
-    problema = (
-        "Planejar uma viagem de 5 dias para Bariloche com orcamento "
-        "total de R$6.000 por pessoa, incluindo passagem, hospedagem e "
-        "passeios."
-    )
+6. TREE OF THOUGHT (ToT)
+----------------
 
-    def gerar_ramos(n: int = 3) -> list[str]:
-        prompt = (
-            f"{problema}\n\nGere {n} roteiros DISTINTOS e viaveis "
-            f"(estrategias diferentes de alocacao de orcamento, ex: "
-            f"mais hospedagem vs mais passeios vs economia em "
-            f"passagem). Separe cada roteiro com '### ROTEIRO N'."
-        )
-        resp = client.messages.create(
-            model=MODEL, max_tokens=900, temperature=0.9,
-            messages=[{"role": "user", "content": prompt}],
-        )
-        texto = resp.content[0].text
-        return [r.strip() for r in texto.split("### ROTEIRO") if r.strip()]
+Prompt 1 (gerar ramos):
+Planejar uma viagem de 5 dias para Bariloche com orcamento total de
+R$6.000 por pessoa, incluindo passagem, hospedagem e passeios.
 
-    def avaliar_ramo(ramo: str) -> str:
-        prompt = (
-            f"Problema original: {problema}\n\nRoteiro proposto:\n{ramo}\n\n"
-            f"Avalie este roteiro de 0 a 10 em: viabilidade de "
-            f"orcamento, qualidade da experiencia e risco de "
-            f"imprevistos. De uma nota final combinada e justifique em "
-            f"2 frases. Termine com 'NOTA: <numero>'."
-        )
-        resp = client.messages.create(
-            model=MODEL, max_tokens=250,
-            messages=[{"role": "user", "content": prompt}],
-        )
-        return resp.content[0].text
+Gere 3 roteiros DISTINTOS e viaveis (estrategias diferentes de
+alocacao de orcamento, ex: mais hospedagem vs mais passeios vs
+economia em passagem). Separe cada roteiro com "### ROTEIRO N".
 
-    ramos = gerar_ramos(n=3)
-    for i, ramo in enumerate(ramos, 1):
-        print(f"\n=== Ramo {i} ===\n{ramo}")
-        avaliacao = avaliar_ramo(ramo)
-        print(f"\n--- Avaliacao do ramo {i} ---\n{avaliacao}")
+Prompt 2 (avaliar cada ramo):
+Problema original: [problema acima]
 
-    # Em producao: parsear a NOTA de cada avaliacao e escolher o ramo
-    # com maior pontuacao, ou pedir para a propria IA comparar as
-    # avaliacoes e apontar o vencedor.
+Roteiro proposto:
+[um dos roteiros gerados]
+
+Avalie este roteiro de 0 a 10 em: viabilidade de orcamento, qualidade
+da experiencia e risco de imprevistos. De uma nota final combinada e
+justifique em 2 frases. Termine com "NOTA: <numero>".
 
 
-# ============================================================
-# 6. SKELETON OF THOUGHT (SoT)
-# Primeiro gera um esqueleto (topicos) da resposta, depois expande cada
-# topico em paralelo.
-# ============================================================
-def demo_skeleton_of_thought():
-    tema = "Relatorio sobre os impactos da IA generativa no mercado de trabalho"
+7. SKELETON OF THOUGHT (SoT)
+----------------
 
-    def gerar_esqueleto() -> list[str]:
-        prompt = (
-            f"Tema: {tema}\n\nGere apenas o esqueleto (titulos de "
-            f"secao) de um relatorio sobre esse tema. 4 a 6 secoes. "
-            f"Uma por linha, sem numeracao, sem explicacao -- so os "
-            f"titulos."
-        )
-        resp = client.messages.create(
-            model=MODEL, max_tokens=200,
-            messages=[{"role": "user", "content": prompt}],
-        )
-        return [l.strip("- ").strip() for l in resp.content[0].text.split("\n") if l.strip()]
+Prompt 1 (esqueleto):
+Tema: Relatorio sobre os impactos da IA generativa no mercado de
+trabalho
 
-    def expandir_secao(secao: str) -> str:
-        prompt = (
-            f"Relatorio sobre: {tema}\nEscreva o conteudo da secao "
-            f"'{secao}' (2 a 3 paragrafos, direto ao ponto)."
-        )
-        resp = client.messages.create(
-            model=MODEL, max_tokens=400,
-            messages=[{"role": "user", "content": prompt}],
-        )
-        return resp.content[0].text
+Gere apenas o esqueleto (titulos de secao) de um relatorio sobre esse
+tema. 4 a 6 secoes. Uma por linha, sem numeracao, sem explicacao -- so
+os titulos.
 
-    secoes = gerar_esqueleto()
-    print("=== Esqueleto ===")
-    for s in secoes:
-        print(f"- {s}")
-
-    # Expande as secoes em paralelo (o ganho de velocidade do SoT vem
-    # justamente de nao esperar uma secao terminar para comecar a outra).
-    with ThreadPoolExecutor(max_workers=len(secoes)) as executor:
-        resultados = list(executor.map(expandir_secao, secoes))
-
-    print("\n=== Relatorio completo ===")
-    for titulo, conteudo in zip(secoes, resultados):
-        print(f"\n## {titulo}\n{conteudo}")
+Prompt 2 (expandir cada secao, uma por vez ou em paralelo):
+Relatorio sobre: Relatorio sobre os impactos da IA generativa no
+mercado de trabalho
+Escreva o conteudo da secao "[titulo da secao]" (2 a 3 paragrafos,
+direto ao ponto).
 
 
-# ============================================================
-# 7. ReAct (Reasoning + Acting)
-# A IA alterna entre pensar e agir (chamar ferramenta), usa a
-# observacao para o proximo passo, ate concluir.
-# ============================================================
-def demo_react():
-    def get_previsao_tempo(cidade: str) -> str:
-        dados = {"Sao Paulo": "chuva forte, 19C", "Rio de Janeiro": "sol, 30C"}
-        return dados.get(cidade, "sem dados para essa cidade")
+8. ReAct
+----------------
 
-    ferramentas = {"get_previsao_tempo": get_previsao_tempo}
-    tools_schema = [{
-        "name": "get_previsao_tempo",
-        "description": "Retorna a previsao do tempo para uma cidade.",
-        "input_schema": {
-            "type": "object",
-            "properties": {"cidade": {"type": "string"}},
-            "required": ["cidade"],
-        },
-    }]
+Qual a previsao do tempo em Sao Paulo amanha e eu devo levar
+guarda-chuva?
 
-    mensagens = [{"role": "user", "content": "Qual a previsao do tempo em Sao Paulo amanha e eu devo levar guarda-chuva?"}]
-
-    for passo in range(5):
-        resp = client.messages.create(
-            model=MODEL, max_tokens=500, tools=tools_schema, messages=mensagens,
-        )
-        mensagens.append({"role": "assistant", "content": resp.content})
-
-        tool_calls = [b for b in resp.content if b.type == "tool_use"]
-        if not tool_calls:
-            texto = "".join(b.text for b in resp.content if b.type == "text")
-            print(f"[Passo {passo}] Resposta final: {texto}")
-            return
-
-        resultados = []
-        for call in tool_calls:
-            print(f"[Passo {passo}] Thought -> Action: {call.name}({call.input})")
-            resultado = ferramentas[call.name](**call.input)
-            print(f"[Passo {passo}] Observation: {resultado}")
-            resultados.append({"type": "tool_result", "tool_use_id": call.id, "content": str(resultado)})
-
-        mensagens.append({"role": "user", "content": resultados})
-
-    print("Nao concluido dentro do limite de passos.")
+(A IA decide sozinha, com base numa ferramenta de previsao do tempo
+disponivel, alternar entre "penso que preciso checar o clima" -> chama
+a ferramenta -> observa o resultado -> responde. Nao e um prompt
+unico, e o modelo raciocinando e agindo em ciclos ate concluir.)
 
 
-# ============================================================
-# 8. ReAct PARA TRADE-OFFS
-# Mesmo loop do ReAct aplicado a decisoes com multiplos criterios
-# concorrentes, buscando dado real via ferramenta a cada criterio.
-# ============================================================
-def demo_react_trade_offs():
-    def consultar_preco(fornecedor: str) -> str:
-        return {"Fornecedor A": "R$45.000", "Fornecedor B": "R$52.000"}.get(fornecedor, "sem dado")
+9. ReAct PARA TRADE-OFFS
+----------------
 
-    def consultar_prazo_entrega(fornecedor: str) -> str:
-        return {"Fornecedor A": "45 dias", "Fornecedor B": "20 dias"}.get(fornecedor, "sem dado")
+Preciso escolher entre Fornecedor A e Fornecedor B para comprar
+equipamentos. Compare preco, prazo de entrega e avaliacoes de cada um
+usando as ferramentas disponiveis, e recomende um, explicando o
+trade-off.
 
-    def consultar_avaliacoes(fornecedor: str) -> str:
-        return {"Fornecedor A": "4.2/5 (120 avaliacoes)", "Fornecedor B": "3.6/5 (40 avaliacoes)"}.get(fornecedor, "sem dado")
-
-    ferramentas = {
-        "consultar_preco": consultar_preco,
-        "consultar_prazo_entrega": consultar_prazo_entrega,
-        "consultar_avaliacoes": consultar_avaliacoes,
-    }
-    tools_schema = [
-        {
-            "name": nome,
-            "description": f"Consulta {nome.replace('_', ' ')} de um fornecedor.",
-            "input_schema": {
-                "type": "object",
-                "properties": {"fornecedor": {"type": "string"}},
-                "required": ["fornecedor"],
-            },
-        }
-        for nome in ferramentas
-    ]
-
-    mensagens = [{
-        "role": "user",
-        "content": (
-            "Preciso escolher entre Fornecedor A e Fornecedor B para "
-            "comprar equipamentos. Compare preco, prazo de entrega e "
-            "avaliacoes de cada um usando as ferramentas disponiveis, "
-            "e recomende um, explicando o trade-off."
-        ),
-    }]
-
-    for passo in range(8):
-        resp = client.messages.create(
-            model=MODEL, max_tokens=600, tools=tools_schema, messages=mensagens,
-        )
-        mensagens.append({"role": "assistant", "content": resp.content})
-
-        tool_calls = [b for b in resp.content if b.type == "tool_use"]
-        if not tool_calls:
-            texto = "".join(b.text for b in resp.content if b.type == "text")
-            print(f"\n[Recomendacao final]\n{texto}")
-            return
-
-        resultados = []
-        for call in tool_calls:
-            resultado = ferramentas[call.name](**call.input)
-            print(f"[Passo {passo}] {call.name}({call.input}) -> {resultado}")
-            resultados.append({"type": "tool_result", "tool_use_id": call.id, "content": str(resultado)})
-
-        mensagens.append({"role": "user", "content": resultados})
-
-    print("Nao concluido dentro do limite de passos.")
+(Mesma logica: a cada criterio a IA "age" consultando uma ferramenta
+real de preco/prazo/avaliacao antes de concluir, em vez de responder
+de memoria.)
 
 
-# ============================================================
-# 9. IDENTIFICANDO BUGS COM ReAct
-# Loop hipotese -> teste (roda o codigo) -> observacao -> nova
-# hipotese, ate isolar a causa raiz.
-# ============================================================
-def demo_react_bugs():
-    codigo_com_bug = '''
-def calcular_media(notas):
-    total = 0
-    for n in notas:
-        total += n
-    return total / len(notas)
+10. IDENTIFICANDO BUGS COM ReAct
+----------------
 
-def calcular_media_turma(alunos):
-    # alunos = {"nome": [notas]}
-    medias = {}
-    for nome, notas in alunos.items():
-        medias[nome] = calcular_media(notas)
-    return medias
+O codigo abaixo tem um bug. Formule uma hipotese, use a ferramenta de
+execucao de codigo para testar (rode o codigo original e depois
+versoes corrigidas), observe o resultado e repita ate encontrar e
+corrigir o bug. No final, mostre o codigo corrigido completo.
 
-alunos = {"Ana": [8, 9, 7], "Bruno": [], "Carla": [6, 7, 8]}
-print(calcular_media_turma(alunos))
-'''
-
-    def executar_codigo(codigo: str) -> str:
-        with tempfile.NamedTemporaryFile("w", suffix=".py", delete=False) as f:
-            f.write(codigo)
-            caminho = f.name
-        resultado = subprocess.run(
-            ["python3", caminho], capture_output=True, text=True, timeout=10
-        )
-        return f"STDOUT:\n{resultado.stdout}\nSTDERR:\n{resultado.stderr}"
-
-    ferramentas = {"executar_codigo": executar_codigo}
-    tools_schema = [{
-        "name": "executar_codigo",
-        "description": "Executa um trecho de codigo Python e retorna stdout/stderr.",
-        "input_schema": {
-            "type": "object",
-            "properties": {"codigo": {"type": "string"}},
-            "required": ["codigo"],
-        },
-    }]
-
-    mensagens = [{
-        "role": "user",
-        "content": (
-            "O codigo abaixo tem um bug. Formule uma hipotese, use a "
-            "ferramenta executar_codigo para testar (rode o codigo "
-            "original e depois versoes corrigidas), observe o "
-            "resultado e repita ate encontrar e corrigir o bug. No "
-            "final, mostre o codigo corrigido completo.\n\n" + codigo_com_bug
-        ),
-    }]
-
-    for passo in range(6):
-        resp = client.messages.create(
-            model=MODEL, max_tokens=800, tools=tools_schema, messages=mensagens,
-        )
-        mensagens.append({"role": "assistant", "content": resp.content})
-
-        tool_calls = [b for b in resp.content if b.type == "tool_use"]
-        if not tool_calls:
-            texto = "".join(b.text for b in resp.content if b.type == "text")
-            print(f"\n[Conclusao]\n{texto}")
-            return
-
-        resultados = []
-        for call in tool_calls:
-            print(f"[Passo {passo}] Testando hipotese, rodando codigo...")
-            resultado = ferramentas[call.name](**call.input)
-            print(f"[Passo {passo}] Observacao:\n{resultado}")
-            resultados.append({"type": "tool_result", "tool_use_id": call.id, "content": resultado})
-
-        mensagens.append({"role": "user", "content": resultados})
-
-    print("Nao concluido dentro do limite de passos.")
+[cole aqui o codigo com bug]
 
 
-# ============================================================
-# 10. PROMPT CHAINING COM LANGCHAIN
-# Quebra uma tarefa complexa em varios prompts encadeados: a saida de
-# um vira entrada do proximo.
-# ============================================================
-def demo_prompt_chaining_langchain():
-    from langchain_anthropic import ChatAnthropic
-    from langchain_core.prompts import ChatPromptTemplate
-    from langchain_core.output_parsers import StrOutputParser
-    from langchain_core.runnables import RunnablePassthrough
+11. PROMPT CHAINING
+----------------
 
-    llm = ChatAnthropic(model=MODEL, api_key=os.environ.get("ANTHROPIC_API_KEY", ""))
+Prompt 1 (extracao):
+Extraia em topicos os pontos-chave deste contrato (vigencia,
+renovacao, multas, responsabilidades, prazo de pagamento):
 
-    contrato = """\
-Contrato de prestacao de servicos entre Empresa X e Fornecedor Y.
-Vigencia de 12 meses, renovacao automatica salvo aviso com 30 dias de
-antecedencia. Multa por rescisao antecipada de 20% do valor restante.
-Fornecedor nao se responsabiliza por atrasos causados por terceiros.
-Pagamento em ate 45 dias apos emissao de nota fiscal.
-"""
+[texto do contrato]
 
-    # Etapa 1: extrair dados estruturados do contrato
-    prompt_extracao = ChatPromptTemplate.from_template(
-        "Extraia em topicos os pontos-chave deste contrato (vigencia, "
-        "renovacao, multas, responsabilidades, prazo de pagamento):\n\n{contrato}"
-    )
-    # Etapa 2: resumir riscos com base nos pontos extraidos
-    prompt_riscos = ChatPromptTemplate.from_template(
-        "Com base nestes pontos do contrato:\n\n{pontos}\n\n"
-        "Liste os riscos para a Empresa X, do mais para o menos critico."
-    )
-    # Etapa 3: gerar parecer final combinando pontos + riscos
-    prompt_parecer = ChatPromptTemplate.from_template(
-        "Pontos do contrato:\n{pontos}\n\nRiscos identificados:\n{riscos}\n\n"
-        "Escreva um parecer final de 1 paragrafo: assinar como esta, "
-        "renegociar, ou nao assinar -- e por que."
-    )
+Prompt 2 (riscos, usa a saida do prompt 1):
+Com base nestes pontos do contrato:
 
-    parser = StrOutputParser()
-    extracao_chain = prompt_extracao | llm | parser
+[saida do prompt 1]
 
-    cadeia_completa = (
-        RunnablePassthrough.assign(pontos=extracao_chain)
-        | RunnablePassthrough.assign(riscos=(prompt_riscos | llm | parser))
-        | RunnablePassthrough.assign(parecer=(prompt_parecer | llm | parser))
-    )
+Liste os riscos para a Empresa X, do mais para o menos critico.
 
-    resultado = cadeia_completa.invoke({"contrato": contrato})
+Prompt 3 (parecer final, usa as saidas de 1 e 2):
+Pontos do contrato:
+[saida do prompt 1]
 
-    print("=== Pontos extraidos (etapa 1) ===")
-    print(resultado["pontos"])
-    print("\n=== Riscos (etapa 2) ===")
-    print(resultado["riscos"])
-    print("\n=== Parecer final (etapa 3) ===")
-    print(resultado["parecer"])
+Riscos identificados:
+[saida do prompt 2]
 
-
-# ============================================================
-# DISPATCHER
-# ============================================================
-DEMOS = {
-    "1": ("Role prompt", demo_role_prompt),
-    "2": ("Zero-shot vs Few-shot", demo_zero_few_shot),
-    "3": ("Chain of Thought", demo_chain_of_thought),
-    "4": ("CoT + Self-Consistency", demo_cot_self_consistency),
-    "5": ("Tree of Thought", demo_tree_of_thought),
-    "6": ("Skeleton of Thought", demo_skeleton_of_thought),
-    "7": ("ReAct", demo_react),
-    "8": ("ReAct para trade-offs", demo_react_trade_offs),
-    "9": ("Identificando bugs com ReAct", demo_react_bugs),
-    "10": ("Prompt chaining com LangChain", demo_prompt_chaining_langchain),
-}
-
-if __name__ == "__main__":
-    import sys
-
-    if len(sys.argv) < 2 or sys.argv[1] not in DEMOS:
-        print("Uso: python prompting_tecnicas.py <numero>\n")
-        print("Exemplos disponiveis:")
-        for chave, (nome, _) in DEMOS.items():
-            print(f"  {chave}: {nome}")
-    else:
-        nome, funcao = DEMOS[sys.argv[1]]
-        print(f"=== Rodando: {nome} ===\n")
-        funcao()
+Escreva um parecer final de 1 paragrafo: assinar como esta, renegociar,
+ou nao assinar -- e por que.
