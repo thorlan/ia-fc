@@ -1,0 +1,46 @@
+"""
+ROLE PROMPT
+Define um papel/persona para a IA assumir, o que muda tom, vocabulário e
+critérios de julgamento da resposta -- mesmo pergunta, resposta diferente.
+"""
+import os
+from anthropic import Anthropic
+
+client = Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
+MODEL = "claude-sonnet-5"
+
+PERGUNTA = "Vale a pena tomar 5g de creatina por dia?"
+
+def perguntar_sem_role():
+    resp = client.messages.create(
+        model=MODEL,
+        max_tokens=400,
+        messages=[{"role": "user", "content": PERGUNTA}],
+    )
+    return resp.content[0].text
+
+def perguntar_com_role(persona: str):
+    resp = client.messages.create(
+        model=MODEL,
+        max_tokens=400,
+        system=persona,
+        messages=[{"role": "user", "content": PERGUNTA}],
+    )
+    return resp.content[0].text
+
+if __name__ == "__main__":
+    print("=== Sem role ===")
+    print(perguntar_sem_role())
+
+    print("\n=== Role: nutricionista esportivo ===")
+    print(perguntar_com_role(
+        "Você é um nutricionista esportivo com CRN ativo. Responda com "
+        "base em evidência científica, cite doses e possíveis efeitos "
+        "colaterais, e seja direto."
+    ))
+
+    print("\n=== Role: personal trainer motivacional ===")
+    print(perguntar_com_role(
+        "Você é um personal trainer super motivacional. Responda de forma "
+        "curta, animada e prática, sem jargão técnico."
+    ))
