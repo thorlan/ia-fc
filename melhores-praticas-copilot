@@ -1,0 +1,13 @@
+Melhores práticas com GitHub Copilot (eficiência de tokens/créditos):
+
+Deixe o Auto escolher o modelo — ele já pondera tarefa, saúde do modelo e custo; trocar manualmente no meio da sessão quebra o cache de prompt.
+
+Mantenha o contexto focado: abra sessão nova ao mudar de tarefa, use /compact em sessões longas, e mencione diretamente os arquivos relevantes em vez de deixar o Copilot vasculhar o repo.
+
+Evite trocar modelo, nível de raciocínio, tamanho de contexto ou ferramentas ativas no meio de uma sessão — qualquer uma dessas mudanças invalida o cache e força reprocessar tudo do zero.
+
+Ative só as ferramentas/MCPs que a tarefa precisa; toolsets grandes inflam o prompt mesmo sem serem usados.
+
+Planeje antes de paralelizar — peça um plano primeiro; múltiplos agentes em paralelo multiplicam o consumo de créditos.
+
+Acompanhe o uso pela página de AI usage (ou uso por sessão no Copilot CLI) para identificar padrões caros.
