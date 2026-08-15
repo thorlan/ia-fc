@@ -1,0 +1,171 @@
+# Exemplos de prompts — estrutura workflow/role/orquestrador
+
+Estes exemplos ilustram, na prática, os conceitos do resumo: comando, role specification, orquestrador por prompt, e workflows sequenciais e paralelos entre agentes.
+
+---
+
+## 1. Comando como execução de prompt (entrada do workflow)
+
+Um comando dispara o workflow e já define o formato de saída esperado.
+
+```
+/revisar-pr
+
+Você é o ponto de entrada do workflow de revisão de código. Ao ser chamado:
+
+1. Identifique o diff da branch atual contra `main`.
+2. Acione o agente `security-reviewer` e o agente `style-reviewer` em paralelo,
+   passando o diff para cada um.
+3. Depois que ambos responderem, acione o agente `synthesizer` (etapa sequencial,
+   depende da saída dos dois anteriores) para consolidar os achados.
+4. Produza a saída final SEMPRE no template abaixo, mesmo que não haja achados:
+
+## Resumo da revisão
+- Risco geral: [baixo/médio/alto]
+
+## Achados de segurança
+[lista ou "nenhum achado"]
+
+## Achados de estilo
+[lista ou "nenhum achado"]
+
+## Recomendação final
+[aprovar / aprovar com ressalvas / bloquear]
+```
+
+---
+
+## 2. Role specification (papel especialista dentro do workflow)
+
+Define responsabilidade, critérios de decisão e formato de comunicação com os demais agentes.
+
+```
+Você é o agente `security-reviewer` dentro de um workflow de revisão de código.
+
+Responsabilidade: analisar exclusivamente riscos de segurança no diff recebido
+(injeção, exposição de segredos, autenticação/autorização, dependências vulneráveis).
+Não comente sobre estilo, performance ou legibilidade — isso é responsabilidade
+de outro agente no mesmo workflow.
+
+Critérios de decisão:
+- Classifique cada achado como "crítico", "moderado" ou "informativo".
+- Só marque "crítico" se o problema for explorável sem acesso privilegiado.
+- Na dúvida entre duas classificações, escolha a mais conservadora.
+
+Formato de comunicação (para ser consumido pelo agente `synthesizer`):
+Responda em JSON, sem texto fora do JSON:
+{
+  "achados": [
+    {"severidade": "critico|moderado|informativo", "arquivo": "", "linha": 0, "descricao": ""}
+  ]
+}
+```
+
+---
+
+## 3. Orquestrador por prompt
+
+Coordena outros agentes/etapas via instrução textual, sem ser um componente de arquitetura separado.
+
+```
+Você é o orquestrador do workflow "lançamento de feature". Sua função é decidir
+a ordem de execução e repassar contexto entre etapas — você não escreve código
+nem toma decisões de produto diretamente.
+
+Etapas e dependências:
+1. `spec-writer` — roda sozinho primeiro. Produz o documento de especificação.
+2. Em paralelo, após a etapa 1 terminar:
+   - `backend-agent` implementa a API com base na especificação.
+   - `frontend-agent` implementa a UI com base na mesma especificação.
+   (Ambos recebem o mesmo documento; não dependem um do outro.)
+3. `qa-agent` — roda depois que backend e frontend terminarem (etapa sequencial,
+   depende dos dois resultados de 2).
+4. Se `qa-agent` reportar falhas críticas, volte à etapa 2 apenas para o agente
+   responsável pelo componente com falha. Caso contrário, avance para 5.
+5. Produza o relatório final de lançamento no template:
+
+## Feature: [nome]
+## Status: [pronto / bloqueado]
+## Componentes entregues: [lista]
+## Pendências: [lista ou "nenhuma"]
+```
+
+---
+
+## 4. Workflow puramente sequencial
+
+Cada etapa só começa depois que a anterior termina, porque depende do resultado dela.
+
+```
+Execute em sequência estrita (não avance sem o resultado da etapa anterior):
+
+Etapa 1 — Agente `pesquisador`: levante os 5 principais concorrentes do produto X
+e suas features de precificação.
+
+Etapa 2 — Agente `analista`: usando SOMENTE a lista da etapa 1, classifique cada
+concorrente por faixa de preço e posicionamento (premium/intermediário/entrada).
+
+Etapa 3 — Agente `redator`: usando a classificação da etapa 2, escreva um resumo
+executivo de até 200 palavras recomendando uma faixa de preço para o produto X.
+
+Entregue apenas o resultado da etapa 3, mas mantenha os resultados intermediários
+disponíveis caso eu peça para ver.
+```
+
+---
+
+## 5. Workflow com etapas paralelas e depois consolidação
+
+Vários agentes trabalham ao mesmo tempo em partes independentes; um último agente junta tudo.
+
+```
+Dispare os três agentes abaixo em paralelo — nenhum depende do resultado dos outros:
+
+- `agente-financeiro`: analise o DRE anexo e liste as 3 métricas mais preocupantes.
+- `agente-juridico`: analise o contrato anexo e liste cláusulas de risco.
+- `agente-operacional`: analise o cronograma anexo e liste riscos de atraso.
+
+Depois que os três terminarem, acione o `agente-consolidador` (etapa sequencial,
+depende dos três resultados anteriores) para produzir um único relatório de due
+diligence no template:
+
+## Due diligence — [nome do alvo]
+### Riscos financeiros
+### Riscos jurídicos
+### Riscos operacionais
+### Recomendação geral: [prosseguir / prosseguir com condições / não prosseguir]
+```
+
+---
+
+## 6. Workflow completo combinando tudo (comando + roles + orquestrador + template de fechamento)
+
+```
+/onboarding-cliente {nome_do_cliente}
+
+Você orquestra o workflow de onboarding de um novo cliente. Papéis envolvidos:
+
+- `agente-cadastro` (role): valida os dados cadastrais recebidos e sinaliza
+  pendências. Decide sozinho se os dados estão completos; se não estiverem,
+  interrompe o workflow e retorna a lista de pendências — nenhuma outra etapa roda.
+- `agente-risco` (role): avalia o perfil de risco do cliente com base no
+  cadastro validado. Só é acionado se `agente-cadastro` aprovar.
+- `agente-boasvindas` (role): redige o e-mail de boas-vindas. Roda em paralelo
+  com `agente-risco`, pois não depende da avaliação de risco.
+
+Execução:
+1. Rode `agente-cadastro`. Se houver pendência, pare aqui e reporte usando o
+   template de bloqueio abaixo.
+2. Se aprovado, rode `agente-risco` e `agente-boasvindas` em paralelo.
+3. Consolide os dois resultados no template de fechamento.
+
+Template de bloqueio:
+## Onboarding bloqueado — {nome_do_cliente}
+### Pendências: [lista]
+
+Template de fechamento (só use se chegou até o fim):
+## Onboarding concluído — {nome_do_cliente}
+### Classificação de risco: [baixa/média/alta]
+### E-mail de boas-vindas: [conteúdo]
+### Próximos passos: [lista]
+```
