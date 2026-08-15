@@ -1,0 +1,26 @@
+Workflow specification prompt
+Workflow specification prompt é a estrutura que descreve a execução de um trabalho como fluxo operacional, não apenas como instrução isolada. Ele define comandos específicos sobre o que deve acontecer quando um agente é executado e organiza essas ações em sequência explícita, inclusive quando há dependência entre agentes. Seu valor está em transformar uma tarefa difusa em um workflow verificável, com etapas e templates de saída esperados ao final da execução conjunta.
+
+Templates e fechamento do workflow
+Nesse tipo de prompt, a saída final não fica aberta para improviso do modelo. O workflow já embute quais templates ou formatos devem ser produzidos depois que os agentes envolvidos terminarem suas partes, o que cria um contrato de fechamento para o processo inteiro. Isso é diferente de apenas mandar um agente “resolver o problema”: o prompt já antecipa como o resultado consolidado deve aparecer quando a cadeia de execução termina.
+
+Role specification
+Role specification define um papel especializado dentro de um workflow multiagente. Esse prompt não só delimita responsabilidade própria, como também embute um framework de atuação: quais decisões o agente pode tomar, com base em quais princípios e como deve se comunicar. Retomando a lógica de agentes especialistas já usada antes, a novidade aqui é que o papel passa a ser desenhado como peça de coordenação dentro de um sistema maior, e não apenas como executor isolado.
+
+Papel, decisão e padronização de comunicação
+Um role specification forte não descreve só “quem o agente é”, mas como ele decide e como ele se comunica com os demais componentes do workflow. Isso importa porque, em ambientes multiagentes, falha de coordenação costuma surgir menos por falta de capacidade e mais por mensagens ambíguas, formatos inconsistentes e responsabilidades sobrepostas. Ao padronizar comunicação e critérios de decisão, o prompt reduz atrito entre agentes e melhora a previsibilidade da colaboração.
+
+Orquestrador por prompt
+Um orquestrador por prompt é um prompt cujo papel é coordenar outras tarefas ou outros agentes durante a execução. Ele não precisa ser entendido aqui como componente arquitetural completo; neste contexto, trata-se de uma camada de instrução que organiza o trabalho multiagente por meio de texto operacional. A distinção é importante: existe orquestração em arquitetura de software, mas aqui o foco está na orquestração implementada diretamente no prompt.
+
+Comando como execução de prompt
+Retomando a ideia de comando já usada antes, o comando é a forma executável de disparar um prompt. Quando uma ferramenta como o Cloud Code oferece commands, ela está fornecendo uma interface operacional para iniciar esse comportamento, mas a lógica real continua sendo textual e instrucional. Por isso, mesmo fora de uma ferramenta com suporte nativo a comandos, ainda é possível reproduzir comportamento semelhante se o prompt estiver bem estruturado.
+
+Tarefas sequenciais e paralelas
+Workflows com agentes podem combinar tarefas sequenciais e paralelas dentro da mesma execução. Em tarefas sequenciais, uma etapa depende da saída da anterior; em tarefas paralelas, múltiplos agentes executam partes independentes ao mesmo tempo e o resultado depois é consolidado. A escolha entre essas formas altera o desenho do prompt, porque o workflow precisa deixar claro o que depende de quê e o que pode avançar simultaneamente.
+
+Workflows com agentes
+Um workflow com agentes distribui o trabalho entre prompts com papéis distintos, em vez de concentrar tudo em um único agente genérico. Um prompt pode atuar como comando de entrada, outro como especialista e outro como orquestrador que coordena a execução conjunta. Essa separação aumenta controle operacional e prepara o sistema para cenários mais complexos, especialmente em atividades de codificação e análise técnica.
+
+Independência relativa da ferramenta
+Como comando, orquestrador e especialista continuam sendo, no fundo, prompts, o comportamento central não depende exclusivamente da plataforma usada. Ferramentas como Cloud Code facilitam a execução com subagentes e paralelismo, mas a lógica conceitual pode ser aplicada em outros ambientes. O ponto decisivo não é o nome do recurso da ferramenta, e sim a clareza com que o prompt define papéis, execução e coordenação de estado.
